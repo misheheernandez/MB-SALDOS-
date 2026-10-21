@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boutique Trendy - Catálogo & Pedidos</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Font Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            50: '#fdf2f8',
+                            100: '#fce7f3',
+                            500: '#ec4899',
+                            600: '#db2777',
+                            700: '#be185d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-gray-100 min-h-full flex flex-col font-sans antialiased">
+
+    <!-- HEADER / NAVBAR -->
+    <header class="sticky top-0 z-30 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2">
+            <!-- Brand Logo -->
+            <div class="flex items-center space-x-2 cursor-pointer" onclick="filtrarCategoria('Todas')">
+                <div class="bg-gradient-to-tr from-pink-500 to-purple-600 text-white p-2 rounded-xl shadow-md">
+                    <i class="fa-solid fa-bag-shopping text-lg"></i>
+                </div>
+                <span class="text-xl font-extrabold bg-gradient-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent hidden sm:inline">
+                    TrendyStore
+                </span>
+            </div>
+
+            <!-- Header Actions -->
+            <div class="flex items-center space-x-2 sm:space-x-3">
+                <!-- Botón Administrar Inventario -->
+                <button onclick="abrirGestionModal()" class="bg-purple-100 hover:bg-purple-200 dark:bg-purple-950/60 dark:hover:bg-purple-900/80 text-purple-700 dark:text-purple-300 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 border border-purple-200 dark:border-purple-800">
+                    <i class="fa-solid fa-boxes-stacked"></i>
+                    <span>Administrar / Editar</span>
+                </button>
+
+                <!-- Botón Nuevo Artículo -->
+                <button onclick="abrirFormularioModal(null)" class="bg-pink-500 hover:bg-pink-600 text-white px-3 py-2 rounded-xl text-xs sm:text-sm font-bold transition shadow-sm flex items-center gap-1.5">
+                    <i class="fa-solid fa-plus"></i>
+                    <span class="hidden md:inline">Nuevo Artículo</span>
+                </button>
+
+                <!-- Botón Carrito de Compras -->
+                <button onclick="toggleCarritoDrawer(true)" class="relative bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 p-2.5 rounded-xl transition flex items-center justify-center">
+                    <i class="fa-solid fa-cart-shopping text-lg"></i>
+                    <span id="badgeCartCount" class="absolute -top-1.5 -right-1.5 bg-pink-500 text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center shadow hidden">
+                        0
+                    </span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex-1 w-full">
+        
+        <!-- Banner Informativo con número predeterminado -->
+        <div class="mb-6 bg-gradient-to-r from-pink-500 via-purple-600 to-indigo-600 rounded-2xl p-4 text-white shadow-md flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div class="flex items-center gap-3">
+                <div class="bg-white/20 p-3 rounded-xl backdrop-blur-sm">
+                    <i class="fa-brands fa-whatsapp text-3xl"></i>
+                </div>
+                <div>
+                    <h2 class="font-bold text-base sm:text-lg">¡Haz tu pedido en línea de forma rápida!</h2>
+                    <p class="text-xs sm:text-sm text-pink-100">Agrega tus productos al carrito y envíalos directamente a nuestro WhatsApp: <span class="font-black underline">221 341 4982</span></p>
+                </div>
+            </div>
+            <button onclick="toggleCarritoDrawer(true)" class="bg-white text-pink-600 px-4 py-2 rounded-xl text-xs font-bold shadow hover:bg-pink-50 transition w-full sm:w-auto text-center shrink-0">
+                Ver Mi Pedido
+            </button>
+        </div>
+
+        <!-- Barra de Búsqueda y Filtros de Categoria -->
+        <div class="flex flex-col md:flex-row gap-4 justify-between items-center mb-6">
+            <!-- Search Bar -->
+            <div class="relative w-full md:w-80">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                <input type="text" id="searchInput" oninput="filtrarProductos()" placeholder="Buscar prendas, bolsas..." class="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 transition shadow-sm">
+            </div>
+
+            <!-- Filter Buttons -->
+            <div class="flex flex-wrap gap-2 w-full md:w-auto justify-start md:justify-end">
+                <button onclick="filtrarCategoria('Todas')" class="btn-categoria active-cat px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition border border-pink-500 bg-pink-500 text-white" data-cat="Todas">Todas</button>
+                <button onclick="filtrarCategoria('Ropa')" class="btn-categoria px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50" data-cat="Ropa">👗 Ropa</button>
+                <button onclick="filtrarCategoria('Bolsas')" class="btn-categoria px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50" data-cat="Bolsas">👜 Bolsas</button>
+                <button onclick="filtrarCategoria('Maquillaje')" class="btn-categoria px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50" data-cat="Maquillaje">💄 Maquillaje</button>
+                <button onclick="filtrarCategoria('Gorras')" class="btn-categoria px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50" data-cat="Gorras">🧢 Gorras</button>
+            </div>
+        </div>
+
+        <!-- GRID DE PRODUCTOS -->
+        <div id="gridProductos" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
+
+        <!-- Empty State catalogo -->
+        <div id="emptyCatalogState" class="hidden text-center py-12">
+            <div class="bg-gray-100 dark:bg-gray-800 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 text-gray-400">
+                <i class="fa-solid fa-box-open text-2xl"></i>
+            </div>
+            <p class="text-base font-semibold text-gray-600 dark:text-gray-300">No se encontraron productos</p>
+            <p class="text-xs text-gray-400 mt-1">Intenta cambiando el filtro de búsqueda o agrega un nuevo artículo.</p>
+        </div>
+    </main>
+
+    <!-- DRAWER DEL CARRITO DE COMPRAS -->
+    <div id="cartDrawerBackdrop" onclick="toggleCarritoDrawer(false)" class="fixed inset-0 bg-black/50 backdrop-blur-xs z-40 hidden transition-opacity"></div>
+    <div id="cartDrawer" class="fixed inset-y-0 right-0 max-w-md w-full bg-white dark:bg-gray-800 z-50 shadow-2xl flex flex-col transform translate-x-full transition-transform duration-300 ease-in-out border-l border-gray-200 dark:border-gray-700">
+        
+        <!-- Header Drawer -->
+        <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-gray-900/50">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-cart-shopping text-pink-500"></i>
+                <h2 class="font-bold text-base">Tu Pedido</h2>
+                <span id="cartItemCountBadge" class="bg-pink-100 dark:bg-pink-900/50 text-pink-600 dark:text-pink-300 text-xs px-2 py-0.5 rounded-full font-bold">0 artículos</span>
+            </div>
+            <button onclick="toggleCarritoDrawer(false)" class="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-lg">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <!-- Body Drawer (Lista de productos agregados) -->
+        <div id="cartItemList" class="flex-1 overflow-y-auto p-4 space-y-3 divide-y divide-gray-100 dark:divide-gray-700/50"></div>
+
+        <!-- Footer Drawer (Totales y WhatsApp) -->
+        <div class="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 space-y-3">
+            <div class="space-y-1 text-sm">
+                <div class="flex justify-between text-gray-500 dark:text-gray-400">
+                    <span>Subtotal</span>
+                    <span id="cartSubtotalText" class="font-semibold text-gray-700 dark:text-gray-200">$0.00</span>
+                </div>
+                <div class="flex justify-between text-lg font-black text-gray-900 dark:text-white pt-1 border-t border-gray-200 dark:border-gray-700">
+                    <span>Total Estimado:</span>
+                    <span id="cartTotalText" class="text-pink-600">$0.00</span>
+                </div>
+            </div>
+
+            <!-- Botón WhatsApp -->
+            <button onclick="enviarPedidoWhatsApp()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl shadow-md hover:shadow-lg transition flex items-center justify-center space-x-2">
+                <i class="fa-brands fa-whatsapp text-xl"></i>
+                <span>Enviar Pedido por WhatsApp</span>
+            </button>
+            <p class="text-[11px] text-center text-gray-400">Se abrirá WhatsApp enviando el detalle a: <b>+52 221 341 4982</b></p>
+        </div>
+    </div>
+
+    <!-- MODAL DE GESTIÓN / TABLA CRUD -->
+    <div id="modalGestion" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-xs">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-4xl w-full p-5 shadow-2xl border border-gray-200 dark:border-gray-700 max-h-[85vh] flex flex-col">
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center pb-3 border-b border-gray-200 dark:border-gray-700">
+                <div class="flex items-center gap-2">
+                    <div class="p-2 bg-purple-100 text-purple-600 rounded-lg">
+                        <i class="fa-solid fa-list-check"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-lg">Inventario de Productos</h3>
+                        <p class="text-xs text-gray-500">Administra, edita o elimina los productos de tu catálogo</p>
+                    </div>
+                </div>
+                <button onclick="cerrarGestionModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Action Bar in Modal -->
+            <div class="py-3 flex justify-between items-center">
+                <span id="totalItemsCount" class="text-xs font-semibold text-gray-500">0 productos guardados</span>
+                <button onclick="abrirFormularioModal(null)" class="bg-pink-500 hover:bg-pink-600 text-white text-xs font-bold px-3 py-2 rounded-xl transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-plus"></i> Agregar Nuevo Artículo
+                </button>
+            </div>
+
+            <!-- Tabla de Artículos -->
+            <div class="overflow-y-auto flex-1 rounded-xl border border-gray-200 dark:border-gray-700">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-gray-100 dark:bg-gray-700/60 sticky top-0 font-bold text-xs uppercase text-gray-600 dark:text-gray-300">
+                        <tr>
+                            <th class="p-3">Vista</th>
+                            <th class="p-3">Nombre</th>
+                            <th class="p-3">Categoría</th>
+                            <th class="p-3">Precio</th>
+                            <th class="p-3 text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaInventarioBody" class="divide-y divide-gray-200 dark:divide-gray-700"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL FORMULARIO (AGREGAR / EDITAR) -->
+    <div id="modalFormulario" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-4 backdrop-blur-xs">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-200 dark:border-gray-700 relative">
+            
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="formTitleText" class="font-bold text-lg text-gray-900 dark:text-white">Editar Producto</h3>
+                <button onclick="cerrarFormularioModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <form onsubmit="guardarProducto(event)" class="space-y-4">
+                <input type="hidden" id="formProductId">
+
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-500 dark:text-gray-400 mb-1">Nombre del Artículo</label>
+                    <input type="text" id="formNombre" required placeholder="Ej. Chamarra de Mezclilla" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:ring-2 focus:ring-pink-500 focus:outline-none">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-gray-500 dark:text-gray-400 mb-1">Precio ($ MXN)</label>
+                        <input type="number" step="0.01" id="formPrecio" required placeholder="299.00" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:ring-2 focus:ring-pink-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-gray-500 dark:text-gray-400 mb-1">Categoría</label>
+                        <select id="formCategoria" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:ring-2 focus:ring-pink-500 focus:outline-none">
+                            <option value="Ropa">Ropa</option>
+                            <option value="Bolsas">Bolsas</option>
+                            <option value="Maquillaje">Maquillaje</option>
+                            <option value="Gorras">Gorras</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-500 dark:text-gray-400 mb-1">Imagen del Producto</label>
+                    <div class="space-y-2">
+                        <input type="file" id="formFileInput" accept="image/*" onchange="procesarFotoLocal(event)" class="w-full text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100 dark:file:bg-gray-700 dark:file:text-pink-300">
+                        <div class="text-center text-[10px] text-gray-400 uppercase font-bold">- O pega la dirección URL -</div>
+                        <input type="text" id="formURLInput" placeholder="https://ejemplo.com/foto.jpg" oninput="usarImagenURL(this.value)" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:ring-2 focus:ring-pink-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <!-- Preview Foto -->
+                <div class="flex items-center justify-center p-2 bg-gray-100 dark:bg-gray-700/50 rounded-xl border border-dashed border-gray-300 dark:border-gray-600">
+                    <img id="formImgPreview" src="" class="w-20 h-20 object-cover rounded-lg hidden shadow-sm">
+                    <span id="formImgPreviewPlaceholder" class="text-xs text-gray-400">Sin imagen seleccionada</span>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-500 dark:text-gray-400 mb-1">Descripción corta</label>
+                    <textarea id="formDescripcion" rows="2" placeholder="Detalles de talla, material o color..." class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm focus:ring-2 focus:ring-pink-500 focus:outline-none"></textarea>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" id="formSubmitBtn" class="w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-2.5 rounded-xl transition shadow-md">
+                        Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT DE LA APLICACIÓN -->
+    <script>
+        // Número telefónico configurado por el usuario para WhatsApp
+        const TELEFONO_WHATSAPP = "522213414982";
+
+        // Productos semilla por defecto
+        const PRODUCTOS_INICIALES = [
+            {
+                id: 1001,
+                nombre: "Chamarra Mezclilla Oversize",
+                precio: 699.00,
+                categoria: "Ropa",
+                imagen: "https://images.unsplash.com/photo-1544441893-675973e31985?w=500&auto=format&fit=crop&q=80",
+                descripcion: "Corte amplio estilo urbano, acabados desgastados de alta calidad."
+            },
+            {
+                id: 1002,
+                nombre: "Bolsa Crossbody Cuero Sintético",
+                precio: 850.00,
+                categoria: "Bolsas",
+                imagen: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=500&auto=format&fit=crop&q=80",
+                descripcion: "Elegante y funcional con compartimentos internos e impermeable."
+            },
+            {
+                id: 1003,
+                nombre: "Set Labiales Matte Liquid (3 Pzs)",
+                precio: 349.00,
+                categoria: "Maquillaje",
+                imagen: "https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=500&auto=format&fit=crop&q=80",
+                descripcion: "Tonos nude y rojizos de ultra larga duración y cero transferencia."
+            },
+            {
+                id: 1004,
+                nombre: "Gorra Snapback Urbana Negra",
+                precio: 299.00,
+                categoria: "Gorras",
+                imagen: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=500&auto=format&fit=crop&q=80",
+                descripcion: "Diseño clásico ajustable con bordado frontal de alta definición."
+            }
+        ];
+
+        // Estado Global
+        let productos = JSON.parse(localStorage.getItem('trendy_productos_v4')) || PRODUCTOS_INICIALES;
+        let carrito = JSON.parse(localStorage.getItem('trendy_carrito_v4')) || [];
+        let categoriaSeleccionada = 'Todas';
+        let imagenBufferProcesada = '';
+
+        // --- FUNCIONES DE RENDERING DE CATÁLOGO ---
+        function renderCatalogo() {
+            const grid = document.getElementById('gridProductos');
+            const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
+            const emptyState = document.getElementById('emptyCatalogState');
+
+            const filtrados = productos.filter(p => {
+                const matchCat = categoriaSeleccionada === 'Todas' || p.categoria === categoriaSeleccionada;
+                const matchSearch = p.nombre.toLowerCase().includes(searchVal) || p.descripcion.toLowerCase().includes(searchVal);
+                return matchCat && matchSearch;
+            });
+
+            if (filtrados.length === 0) {
+                grid.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            grid.innerHTML = filtrados.map(p => `
+                <div class="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col border border-gray-100 dark:border-gray-700/60 group">
+                    <div class="relative h-52 bg-gray-100 dark:bg-gray-700 overflow-hidden">
+                        <img src="${p.imagen}" alt="${p.nombre}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.src='https://via.placeholder.com/400x400?text=Sin+Imagen'">
+                        <span class="absolute top-3 left-3 text-[10px] font-black uppercase bg-white/90 dark:bg-gray-900/90 text-pink-600 dark:text-pink-400 px-2.5 py-1 rounded-full backdrop-blur-xs shadow-sm">
+                            ${p.categoria}
+                        </span>
+                    </div>
+
+                    <div class="p-4 flex-1 flex flex-col justify-between">
+                        <div>
+                            <h3 class="font-bold text-gray-900 dark:text-white text-base line-clamp-1">${p.nombre}</h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">${p.descripcion || 'Sin descripción disponible.'}</p>
+                        </div>
+
+                        <div class="flex justify-between items-center mt-4 pt-3 border-t border-gray-100 dark:border-gray-700/60">
+                            <div>
+                                <span class="text-xs text-gray-400 block leading-none">Precio</span>
+                                <span class="text-lg font-black text-pink-600 dark:text-pink-400">$${Number(p.precio).toFixed(2)}</span>
+                            </div>
+
+                            <button onclick="agregarAlCarrito(${p.id})" class="bg-pink-500 hover:bg-pink-600 active:scale-95 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+                                <i class="fa-solid fa-cart-plus"></i>
+                                <span>+ Agregar</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // --- FILTROS Y BÚSQUEDA ---
+        function filtrarCategoria(cat) {
+            categoriaSeleccionada = cat;
+            document.querySelectorAll('.btn-categoria').forEach(btn => {
+                if (btn.dataset.cat === cat) {
+                    btn.className = "btn-categoria px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition border border-pink-500 bg-pink-500 text-white shadow-xs";
+                } else {
+                    btn.className = "btn-categoria px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50";
+                }
+            });
+            renderCatalogo();
+        }
+
+        function filtrarProductos() {
+            renderCatalogo();
+        }
+
+        // --- LÓGICA DEL CARRITO ---
+        function agregarAlCarrito(id) {
+            const itemExistente = carrito.find(c => c.id === id);
+            if (itemExistente) {
+                itemExistente.cantidad++;
+            } else {
+                const prod = productos.find(p => p.id === id);
+                if (prod) {
+                    carrito.push({
+                        id: prod.id,
+                        nombre: prod.nombre,
+                        precio: prod.precio,
+                        imagen: prod.imagen,
+                        cantidad: 1
+                    });
+                }
+            }
+            guardarYActualizarCarrito();
+            toggleCarritoDrawer(true);
+        }
+
+        function cambiarCantidadCarrito(id, cambio) {
+            const item = carrito.find(c => c.id === id);
+            if (!item) return;
+
+            item.cantidad += cambio;
+            if (item.cantidad <= 0) {
+                carrito = carrito.filter(c => c.id !== id);
+            }
+            guardarYActualizarCarrito();
+        }
+
+        function eliminarDelCarrito(id) {
+            carrito = carrito.filter(c => c.id !== id);
+            guardarYActualizarCarrito();
+        }
+
+        function guardarYActualizarCarrito() {
+            localStorage.setItem('trendy_carrito_v4', JSON.stringify(carrito));
+            renderCarritoDrawer();
+        }
+
+        function renderCarritoDrawer() {
+            const cartList = document.getElementById('cartItemList');
+            let total = 0;
+            let totalItems = 0;
+
+            if (carrito.length === 0) {
+                cartList.innerHTML = `
+                    <div class="text-center py-12">
+                        <div class="text-gray-300 dark:text-gray-600 text-4xl mb-3">
+                            <i class="fa-solid fa-basket-shopping"></i>
+                        </div>
+                        <p class="font-bold text-gray-500">Tu carrito está vacío</p>
+                        <p class="text-xs text-gray-400 mt-1">Explora nuestro catálogo y agrega tus productos favoritos.</p>
+                    </div>
+                `;
+            } else {
+                cartList.innerHTML = carrito.map(c => {
+                    const subtotal = c.precio * c.cantidad;
+                    total += subtotal;
+                    totalItems += c.cantidad;
+                    return `
+                        <div class="flex items-center gap-3 py-3">
+                            <img src="${c.imagen}" class="w-14 h-14 object-cover rounded-xl border border-gray-200 dark:border-gray-700 shrink-0">
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-bold text-xs sm:text-sm text-gray-900 dark:text-white truncate">${c.nombre}</h4>
+                                <p class="text-xs text-pink-600 font-bold">$${Number(c.precio).toFixed(2)} c/u</p>
+                                
+                                <div class="flex items-center gap-2 mt-1.5">
+                                    <div class="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-700">
+                                        <button onclick="cambiarCantidadCarrito(${c.id}, -1)" class="w-6 h-6 flex items-center justify-center text-gray-500 hover:text-black dark:hover:text-white font-bold text-xs">-</button>
+                                        <span class="px-2 text-xs font-bold">${c.cantidad}</span>
+                                        <button onclick="cambiarCantidadCarrito(${c.id}, 1)" class="w-6 h-6 flex items-center justify-center text-gray-500 hover:text-black dark:hover:text-white font-bold text-xs">+</button>
+                                    </div>
+                                    <span class="text-xs font-black text-gray-700 dark:text-gray-300 ml-auto">$${subtotal.toFixed(2)}</span>
+                                </div>
+                            </div>
+                            <button onclick="eliminarDelCarrito(${c.id})" class="text-gray-400 hover:text-red-500 p-1 transition text-sm">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            document.getElementById('cartSubtotalText').innerText = `$${total.toFixed(2)}`;
+            document.getElementById('cartTotalText').innerText = `$${total.toFixed(2)}`;
+            document.getElementById('cartItemCountBadge').innerText = `${totalItems} artículo${totalItems === 1 ? '' : 's'}`;
+
+            const badgeGlobal = document.getElementById('badgeCartCount');
+            badgeGlobal.innerText = totalItems;
+            badgeGlobal.classList.toggle('hidden', totalItems === 0);
+        }
+
+        function toggleCarritoDrawer(abrir) {
+            const drawer = document.getElementById('cartDrawer');
+            const backdrop = document.getElementById('cartDrawerBackdrop');
+            if (abrir) {
+                backdrop.classList.remove('hidden');
+                drawer.classList.remove('translate-x-full');
+            } else {
+                backdrop.classList.add('hidden');
+                drawer.classList.add('translate-x-full');
+            }
+        }
+
+        // --- ENVIAR PEDIDO A WHATSAPP ---
+        function enviarPedidoWhatsApp() {
+            if (carrito.length === 0) {
+                alert("Tu carrito está vacío. Agrega al menos un producto antes de enviar.");
+                return;
+            }
+
+            let mensaje = "🛍️ *¡HOLA! ME GUSTARÍA REALIZAR EL SIGUIENTE PEDIDO:*\n\n";
+            let totalGeneral = 0;
+
+            carrito.forEach((prod, index) => {
+                const subtotal = prod.precio * prod.cantidad;
+                totalGeneral += subtotal;
+                mensaje += `*${index + 1}. ${prod.nombre}*\n`;
+                mensaje += `   • Cantidad: ${prod.cantidad}\n`;
+                mensaje += `   • Precio Unitario: $${Number(prod.precio).toFixed(2)}\n`;
+                mensaje += `   • Subtotal: $${subtotal.toFixed(2)}\n\n`;
+            });
+
+            mensaje += `💰 *TOTAL GENERAL: $${totalGeneral.toFixed(2)} MXN*\n\n`;
+            mensaje += "Quedo a la espera de la confirmación e instrucciones de pago. ¡Gracias!";
+
+            const urlWhatsApp = `https://wa.me/${TELEFONO_WHATSAPP}?text=${encodeURIComponent(mensaje)}`;
+            window.open(urlWhatsApp, '_blank');
+        }
+
+        // --- ADMINISTRACIÓN E INVENTARIO (CRUD) ---
+        function abrirGestionModal() {
+            renderTablaInventario();
+            document.getElementById('modalGestion').classList.remove('hidden');
+        }
+
+        function cerrarGestionModal() {
+            document.getElementById('modalGestion').classList.add('hidden');
+        }
+
+        function renderTablaInventario() {
+            const tbody = document.getElementById('tablaInventarioBody');
+            document.getElementById('totalItemsCount').innerText = `${productos.length} artículos registrados`;
+
+            tbody.innerHTML = productos.map(p => `
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/40 transition">
+                    <td class="p-3">
+                        <img src="${p.imagen}" class="w-10 h-10 object-cover rounded-lg border border-gray-200 dark:border-gray-700">
+                    </td>
+                    <td class="p-3 font-bold text-gray-900 dark:text-white">
+                        ${p.nombre}
+                    </td>
+                    <td class="p-3">
+                        <span class="text-[10px] font-bold bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full uppercase">${p.categoria}</span>
+                    </td>
+                    <td class="p-3 font-black text-pink-600 dark:text-pink-400">
+                        $${Number(p.precio).toFixed(2)}
+                    </td>
+                    <td class="p-3 text-center space-x-1">
+                        <button onclick="abrirFormularioModal(${p.id})" class="bg-blue-100 hover:bg-blue-200 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 px-2.5 py-1.5 rounded-lg text-xs font-bold transition">
+                            <i class="fa-solid fa-pen"></i> Editar
+                        </button>
+                        <button onclick="eliminarProducto(${p.id})" class="bg-red-100 hover:bg-red-200 text-red-700 dark:bg-red-900/50 dark:text-red-300 px-2.5 py-1.5 rounded-lg text-xs font-bold transition">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function abrirFormularioModal(id) {
+            const isEdit = id !== null;
+            document.getElementById('formProductId').value = isEdit ? id : '';
+            document.getElementById('formTitleText').innerText = isEdit ? 'Editar Producto' : 'Nuevo Producto';
+            
+            const submitBtn = document.getElementById('formSubmitBtn');
+            submitBtn.innerText = isEdit ? 'Guardar Cambios' : 'Crear Producto';
+            submitBtn.className = isEdit 
+                ? 'w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl transition shadow-md'
+                : 'w-full bg-pink-500 hover:bg-pink-600 text-white font-bold py-2.5 rounded-xl transition shadow-md';
+
+            if (isEdit) {
+                const prod = productos.find(p => p.id === id);
+                if (prod) {
+                    document.getElementById('formNombre').value = prod.nombre;
+                    document.getElementById('formPrecio').value = prod.precio;
+                    document.getElementById('formCategoria').value = prod.categoria;
+                    document.getElementById('formURLInput').value = prod.imagen;
+                    document.getElementById('formDescripcion').value = prod.descripcion || '';
+                    imagenBufferProcesada = prod.imagen;
+                    
+                    actualizarPreviewModal(prod.imagen);
+                }
+            } else {
+                document.getElementById('formNombre').value = '';
+                document.getElementById('formPrecio').value = '';
+                document.getElementById('formCategoria').value = 'Ropa';
+                document.getElementById('formURLInput').value = '';
+                document.getElementById('formFileInput').value = '';
+                document.getElementById('formDescripcion').value = '';
+                imagenBufferProcesada = '';
+                
+                actualizarPreviewModal('');
+            }
+
+            cerrarGestionModal();
+            document.getElementById('modalFormulario').classList.remove('hidden');
+        }
+
+        function cerrarFormularioModal() {
+            document.getElementById('modalFormulario').classList.add('hidden');
+        }
+
+        // COMPRESIÓN DE IMAGEN LOCAL PARA EVITAR ERROR DE MEMORIA
+        function procesarFotoLocal(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Redimensionar máximo a 400x400 para ahorrar espacio
+                    const MAX_WIDTH = 400;
+                    const MAX_HEIGHT = 400;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Convertir a JPEG con compresión 70%
+                    imagenBufferProcesada = canvas.toDataURL('image/jpeg', 0.7);
+                    actualizarPreviewModal(imagenBufferProcesada);
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function usarImagenURL(url) {
+            imagenBufferProcesada = url;
+            actualizarPreviewModal(url);
+        }
+
+        function actualizarPreviewModal(src) {
+            const imgEl = document.getElementById('formImgPreview');
+            const placeholderEl = document.getElementById('formImgPreviewPlaceholder');
+            
+            if (src && src.trim() !== '') {
+                imgEl.src = src;
+                imgEl.classList.remove('hidden');
+                placeholderEl.classList.add('hidden');
+            } else {
+                imgEl.src = '';
+                imgEl.classList.add('hidden');
+                placeholderEl.classList.remove('hidden');
+            }
+        }
+
+        function guardarProducto(e) {
+            e.preventDefault();
+
+            const id = document.getElementById('formProductId').value;
+            const nombre = document.getElementById('formNombre').value.trim();
+            const precio = parseFloat(document.getElementById('formPrecio').value);
+            const categoria = document.getElementById('formCategoria').value;
+            const descripcion = document.getElementById('formDescripcion').value.trim();
+            const imagen = imagenBufferProcesada || document.getElementById('formURLInput').value.trim() || 'https://via.placeholder.com/400?text=Sin+Imagen';
+
+            if (id) {
+                // Actualizar
+                productos = productos.map(p => p.id == id ? { id: Number(id), nombre, precio, categoria, imagen, descripcion } : p);
+            } else {
+                // Crear Nuevo
+                productos.unshift({
+                    id: Date.now(),
+                    nombre,
+                    precio,
+                    categoria,
+                    imagen,
+                    descripcion
+                });
+            }
+
+            try {
+                localStorage.setItem('trendy_productos_v4', JSON.stringify(productos));
+                cerrarFormularioModal();
+                renderCatalogo();
+            } catch (err) {
+                alert("Error de memoria: La imagen elegida es muy pesada. Por favor intenta con otra foto o una URL.");
+            }
+        }
+
+        function eliminarProducto(id) {
+            if (confirm("¿Estás seguro de que deseas eliminar este artículo del catálogo?")) {
+                productos = productos.filter(p => p.id !== id);
+                localStorage.setItem('trendy_productos_v4', JSON.stringify(productos));
+                renderTablaInventario();
+                renderCatalogo();
+            }
+        }
+
+        // --- INICIALIZACIÓN ---
+        renderCatalogo();
+        renderCarritoDrawer();
+    </script>
+</body>
+</html>
